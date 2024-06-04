@@ -2,14 +2,18 @@ import express from 'express'
 import databaseService from './services/database.services'
 import exitHook from 'async-exit-hook'
 import { env } from './config/environment'
+import routerUser from './routes/users.routes'
+import defaultErrorHandle from './middlewares/errors.middlewares'
 const app = express()
 
 const START_SERVER = async () => {
   app.listen(env.APP_PORT, () => {
     console.log(`Hello Phong phan, I am running at ${env.APP_HOST}:${env.APP_PORT}`)
   })
+  app.use(express.json())
+  app.use('/users', routerUser)
+  app.use(defaultErrorHandle)
 
-  // =======|| CLOSE DB WHEN ERROR || =======//
   exitHook(() => {
     databaseService.closeDb()
   })

@@ -1,5 +1,7 @@
 import { Collection, Db, MongoClient } from 'mongodb'
 import 'dotenv/config'
+import User from '~/models/schemas/User.schema'
+import { env } from '~/config/environment'
 
 const uri = `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@cluster0.wga91f9.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`
 
@@ -18,6 +20,9 @@ class DatabaseService {
       console.log('Error', err)
       throw err
     }
+  }
+  get users(): Collection<User> {
+    return this.db.collection(env.DB_USER_COLLECTION as string)
   }
   async closeDb() {
     await this.client.close()
