@@ -2,6 +2,7 @@ import { Collection, Db, MongoClient } from 'mongodb'
 import 'dotenv/config'
 import User from '~/models/schemas/User.schema'
 import { env } from '~/config/environment'
+import { RefeshToken } from '~/models/schemas/PefeshToken.schema'
 
 const uri = `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@cluster0.wga91f9.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`
 
@@ -23,6 +24,9 @@ class DatabaseService {
   }
   get users(): Collection<User> {
     return this.db.collection(env.DB_USER_COLLECTION as string)
+  }
+  get refeshTokens(): Collection<RefeshToken> {
+    return this.db.collection(env.BD_REFRESH_TOKENS_COLLECTION as string)
   }
   async closeDb() {
     await this.client.close()
