@@ -1,5 +1,10 @@
 import { ParamSchema } from 'express-validator'
+import HTTPSTATUS from '~/constants/httpStatus'
 import USER_MESSAGES from '~/constants/messages'
+import { errorWithStatus } from '~/models/errors'
+import { verifyToken } from './jwt'
+import { capitalize } from 'lodash'
+import { JsonWebTokenError } from 'jsonwebtoken'
 
 export const passwordSchema: ParamSchema = {
   notEmpty: {
@@ -83,5 +88,32 @@ export const dateOfBirthSchema: ParamSchema = {
       strictSeparator: true
     },
     errorMessage: USER_MESSAGES.DATE_OF_BIRTH_MUST_BE_ISO8601
+  }
+}
+
+export const forgotPasswordToken: ParamSchema = {
+  trim: true,
+  custom: {
+    options: async (value: string, { req }) => {
+      if (!value) {
+        throw new errorWithStatus({
+          message: USER_MESSAGES.FORGOT_PASSWORD_TOKEN_IS_REQUIRED,
+          status: HTTPSTATUS.UNAUTHORIZED
+        })
+      }
+      try {
+        const decoded_forgot_password_token = await verifyToken({
+          token: value,
+          secretOrPrivateKey: process.env.JWT_SECRET_FORGOT_PASSWORD_TOKEN as string
+        })
+        console.log(decoded_forgot_password_token, 'decoded_forgot_password_token')
+      } catch (error) {
+        throw new errorWithStatus({
+          message: capitalize((error as JsonWebTokenError).message),
+          status: HTTPSTATUS.UNAUTHORIZED
+        })
+      }
+      return true
+    }
   }
 }
