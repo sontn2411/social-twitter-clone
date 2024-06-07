@@ -5,6 +5,8 @@ import { errorWithStatus } from '~/models/errors'
 import { verifyToken } from './jwt'
 import { capitalize } from 'lodash'
 import { JsonWebTokenError } from 'jsonwebtoken'
+import databaseService from '~/services/database.services'
+import { ObjectId } from 'mongodb'
 
 export const passwordSchema: ParamSchema = {
   notEmpty: {
@@ -106,7 +108,25 @@ export const forgotPasswordToken: ParamSchema = {
           token: value,
           secretOrPrivateKey: process.env.JWT_SECRET_FORGOT_PASSWORD_TOKEN as string
         })
-        console.log(decoded_forgot_password_token, 'decoded_forgot_password_token')
+
+        const { user_id } = decoded_forgot_password_token
+        req.decoded_forgot_password_token = decoded_forgot_password_token
+
+        const user = await databaseService.users.findOne({ _id: new ObjectId(user_id) })
+
+        if (user === null) {
+          throw new errorWithStatus({
+            message: USER_MESSAGES.USER_NOT_FOUND,
+            status: HTTPSTATUS.UNAUTHORIZED
+          })
+        }
+
+        if (user.forgot_password_token !== value) {
+          throw new errorWithStatus({
+            message: USER_MESSAGES.INVALID_FORGOT_PASSWORD_TOKEN,
+            status: HTTPSTATUS.UNAUTHORIZED
+          })
+        }
       } catch (error) {
         throw new errorWithStatus({
           message: capitalize((error as JsonWebTokenError).message),
@@ -114,6 +134,42 @@ export const forgotPasswordToken: ParamSchema = {
         })
       }
       return true
+    }
+  }
+}
+
+export const imageSchema: ParamSchema = {
+  optional: true,
+  isString: {
+    errorMessage: USER_MESSAGES.IMAGE_MUST_BE_STRING
+  },
+  trim: true,
+  isLength: {
+    options: {
+      min: 1,
+      max: 500
+    },
+    errorMessage: USER_MESSAGES.IMAGE_LENGTH
+  }
+}
+
+export const userIdSchema: ParamSchema = {
+  custom: {
+    options: async (value: string, { req }) => {
+      if (!ObjectId.isValid(value)) {
+        throw new errorWithStatus({
+          message: USER_MESSAGES.INVALID_USER_ID,
+          status: HTTPSTATUS.NOT_FOUND
+        })
+      }
+      const followed_user = await databaseService.users.findOne({ _id: new ObjectId(value) })
+
+      if (followed_user === null) {
+        throw new errorWithStatus({
+          message: USER_MESSAGES.USER_NOT_FOUND,
+          status: HTTPSTATUS.NOT_FOUND
+        })
+      }
     }
   }
 }

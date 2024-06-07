@@ -17,6 +17,12 @@ export interface forgotPasswordTokenReqBody {
   forgot_password_token: string
 }
 
+export interface resetPasswordReqBody {
+  password: string
+  confirm_password: string
+  forgotPasswordToken: string
+}
+
 export interface RegisterResBody {
   name: string
   email: string
@@ -25,6 +31,23 @@ export interface RegisterResBody {
   date_of_birth: string
 }
 
+export interface updateMeReqbody {
+  name?: string
+  date_of_birth?: string
+  bio: string
+  location?: string
+  website?: string
+  username?: string
+  avatar?: string
+  cover_photo?: string
+}
+
+export interface getProfileReqParam {
+  username: string
+}
+export interface FollwReqBody {
+  followed_user_id: string
+}
 export interface TokenPayload extends JwtPayload {
   user_id: string
   token_type: TokenType

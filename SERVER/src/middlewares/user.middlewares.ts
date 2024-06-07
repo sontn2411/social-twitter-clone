@@ -1,9 +1,13 @@
+import { NextFunction, Request, Response } from 'express'
 import { checkSchema } from 'express-validator'
 import { JsonWebTokenError } from 'jsonwebtoken'
 import { capitalize } from 'lodash'
+import { UserVerifyStatus } from '~/constants/enum'
 import HTTPSTATUS from '~/constants/httpStatus'
 import USER_MESSAGES from '~/constants/messages'
+import { REGEX_USERNAME } from '~/constants/regex'
 import { errorWithStatus } from '~/models/errors'
+import { TokenPayload } from '~/models/requests/Users.requests'
 import databaseService from '~/services/database.services'
 import userService from '~/services/user.services'
 import { hashPassword } from '~/utils/crypto'
@@ -12,13 +16,15 @@ import {
   confirmPasswordSchema,
   dateOfBirthSchema,
   forgotPasswordToken,
+  imageSchema,
   nameSchema,
-  passwordSchema
+  passwordSchema,
+  userIdSchema
 } from '~/utils/schemaValidationOptions'
 import { validate } from '~/utils/validate'
 
 /**
- * @param RegisterValidator
+ * @RegisterValidator
  */
 export const registerValidator = validate(
   checkSchema(
@@ -51,7 +57,7 @@ export const registerValidator = validate(
 )
 
 /**
- * @param emailVerifyTokenValidator
+ * @emailVerifyTokenValidator
  */
 export const emailVerifyTokenValidator = validate(
   checkSchema(
@@ -91,7 +97,7 @@ export const emailVerifyTokenValidator = validate(
 )
 
 /**
- * @param LoginValidator
+ *@pLoginValidator
  */
 export const loginValidator = validate(
   checkSchema(
@@ -149,7 +155,7 @@ export const loginValidator = validate(
 )
 
 /**
- * @param accessTokenValidator
+ * @accessTokenValidator
  */
 export const accessTokenValidator = validate(
   checkSchema(
@@ -187,7 +193,7 @@ export const accessTokenValidator = validate(
 )
 
 /**
- * @param forgotPasswordValidator
+ * @forgotPasswordValidator
  */
 export const forgotPasswordValidator = validate(
   checkSchema(
@@ -216,10 +222,145 @@ export const forgotPasswordValidator = validate(
   )
 )
 
+/**
+ * @verifyForgotPasswordValidator
+ */
 export const verifyForgotPasswordValidator = validate(
   checkSchema(
     {
       forgot_password_token: forgotPasswordToken
+    },
+    ['body']
+  )
+)
+
+/**
+ * @resetPasswordValidator
+ */
+export const resetPasswordValidator = validate(
+  checkSchema(
+    {
+      password: passwordSchema,
+      confirm_password: confirmPasswordSchema,
+      forgot_password_token: forgotPasswordToken
+    },
+    ['body']
+  )
+)
+
+/**
+ * @verifyUserValidatior
+ */
+export const verifyUserValidatior = async (req: Request, res: Response, next: NextFunction) => {
+  const { verify } = (req as Request).decoded_authorization as TokenPayload
+
+  if (verify !== UserVerifyStatus.Verified) {
+    return next(
+      new errorWithStatus({
+        message: USER_MESSAGES.USER_NOT_VERIFIED,
+        status: HTTPSTATUS.FORBIDDEN
+      })
+    )
+  }
+  next()
+}
+
+/**
+ * @updateMeValidator
+ */
+export const updateMeValidator = validate(
+  checkSchema({
+    name: {
+      ...nameSchema,
+      optional: true,
+      notEmpty: undefined
+    },
+    date_of_birth: {
+      ...dateOfBirthSchema,
+      optional: true
+    },
+    bio: {
+      optional: true,
+      isString: {
+        errorMessage: USER_MESSAGES.BIO_MUST_BE_STRING
+      },
+      trim: true,
+      isLength: {
+        options: {
+          min: 1,
+          max: 200
+        },
+        errorMessage: USER_MESSAGES.BIO_LENGTH
+      }
+    },
+    location: {
+      optional: true,
+      isString: {
+        errorMessage: USER_MESSAGES.LOCATION_MUST_BE_STRING
+      },
+      trim: true,
+      isLength: {
+        options: {
+          min: 1,
+          max: 200
+        },
+        errorMessage: USER_MESSAGES.LOCATION_LENGTH
+      }
+    },
+    website: {
+      optional: true,
+      isString: {
+        errorMessage: USER_MESSAGES.WEBSITE_MUST_BE_STRING
+      },
+      trim: true,
+      isLength: {
+        options: {
+          min: 1,
+          max: 200
+        },
+        errorMessage: USER_MESSAGES.WEBSITE_LENGTH
+      }
+    },
+    username: {
+      optional: true,
+      isString: {
+        errorMessage: USER_MESSAGES.USERNAME_MUST_BE_STRING
+      },
+      trim: true,
+      isLength: {
+        options: {
+          min: 1,
+          max: 200
+        },
+        errorMessage: USER_MESSAGES.USERNAME_LENGTH
+      },
+      custom: {
+        options: async (value: string, { req }) => {
+          if (!REGEX_USERNAME.test(value)) {
+            throw new Error(USER_MESSAGES.USERNAME_INVALID)
+          }
+
+          const user = await databaseService.users.findOne({
+            username: value
+          })
+          if (user) {
+            throw new Error(USER_MESSAGES.USERNAME_EXISTED)
+          }
+        }
+      }
+    },
+    avatar: imageSchema,
+    cover_photo: imageSchema
+  })
+)
+
+/**
+ * @followValidator
+ */
+export const followValidator = validate(
+  checkSchema(
+    {
+      followed_user_id: userIdSchema
     },
     ['body']
   )

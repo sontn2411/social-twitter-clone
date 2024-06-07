@@ -1,4 +1,4 @@
-import { RegisterResBody } from '~/models/requests/Users.requests'
+import { RegisterResBody, updateMeReqbody } from '~/models/requests/Users.requests'
 import databaseService from './database.services'
 import User from '~/models/schemas/User.schema'
 import { hashPassword } from '~/utils/crypto'
@@ -9,6 +9,9 @@ import { ObjectId } from 'mongodb'
 import { verify } from 'crypto'
 import { RefeshToken } from '~/models/schemas/PefeshToken.schema'
 import USER_MESSAGES from '~/constants/messages'
+import { errorWithStatus } from '~/models/errors'
+import HTTPSTATUS from '~/constants/httpStatus'
+import { Follower } from '~/models/schemas/Follower.schema'
 
 class UserService {
   private signAccsessToken({ user_id, verify }: { user_id: string; verify: UserVerifyStatus }) {
@@ -177,6 +180,105 @@ class UserService {
     console.log('forgot_pasword', forgot_password_token)
     return {
       forgot_password_token
+    }
+  }
+
+  async resentPassword({ user_id, password }: { user_id: string; password: string }) {
+    await databaseService.users.updateOne(
+      { _id: new ObjectId(user_id) },
+      {
+        $set: {
+          forgot_password_token: '',
+          password: hashPassword(password)
+        },
+        $currentDate: {
+          updated_at: true
+        }
+      }
+    )
+    return {
+      message: USER_MESSAGES.RESET_PASSWORD_SUCCESS
+    }
+  }
+
+  async getMe(user_id: string) {
+    const user = await databaseService.users.findOne(
+      { _id: new ObjectId(user_id) },
+      {
+        projection: {
+          password: 0,
+          email_verify_token: 0,
+          forgot_password_token: 0
+        }
+      }
+    )
+    return user
+  }
+
+  async updateMe(user_id: string, payload: updateMeReqbody) {
+    const _payload = payload.date_of_birth ? { ...payload, date_of_birth: new Date(payload.date_of_birth) } : payload
+    const user = await databaseService.users.findOneAndUpdate(
+      { _id: new ObjectId(user_id) },
+      {
+        $set: {
+          ...(_payload as updateMeReqbody & { date_of_birth?: Date })
+        },
+        $currentDate: {
+          updated_at: true
+        }
+      },
+      {
+        returnDocument: 'after',
+        projection: {
+          password: 0,
+          email_verify_token: 0,
+          forgot_password_token: 0
+        }
+      }
+    )
+
+    return user
+  }
+  async getProfile(username: string) {
+    const profile = await databaseService.users.findOne(
+      {
+        username
+      },
+      {
+        projection: {
+          password: 0,
+          email_verify_token: 0,
+          forgot_password_token: 0,
+          verify: 0,
+          created_at: 0,
+          updated_at: 0
+        }
+      }
+    )
+    if (profile === null) {
+      throw new errorWithStatus({
+        message: USER_MESSAGES.USER_NOT_FOUND,
+        status: HTTPSTATUS.NOT_FOUND
+      })
+    }
+    return profile
+  }
+  async follower(user_id: string, followed_user_id: string) {
+    const follower = await databaseService.follower.findOne({
+      user_id: new ObjectId(user_id),
+      follower_user_id: new ObjectId(followed_user_id)
+    })
+
+    if (follower === null) {
+      await databaseService.follower.insertOne(
+        new Follower({ user_id: new ObjectId(user_id), follower_user_id: new ObjectId(followed_user_id) })
+      )
+      return {
+        message: USER_MESSAGES.FOLLOW_SUCCESS
+      }
+    }
+    return {
+      message: USER_MESSAGES.ALREADY_FOLLOW
     }
   }
 }
