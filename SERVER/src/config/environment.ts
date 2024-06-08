@@ -3,6 +3,7 @@ import 'dotenv/config'
 export const env = {
   APP_PORT: process.env.APP_PORT,
   APP_HOST: process.env.APP_HOST,
+  HOST_PRODUCTION: process.env.HOST_PRODUCTION,
   //====== || COLLECTION DB || ========//
   MONGODB_URL: process.env.MONGODB_URL,
   DB_PASSWORD: process.env.DB_PASSWORD,

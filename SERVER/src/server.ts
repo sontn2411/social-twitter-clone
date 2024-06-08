@@ -6,6 +6,7 @@ import routerUser from './routes/users.routes'
 import defaultErrorHandle from './middlewares/errors.middlewares'
 import mediasRouter from './routes/medias.routes'
 import { initFolder } from './utils/file'
+import staticRouter from './routes/static.routes'
 const app = express()
 
 const START_SERVER = async () => {
@@ -16,7 +17,9 @@ const START_SERVER = async () => {
   app.use(express.json())
   app.use('/medias', mediasRouter)
   app.use('/users', routerUser)
+  app.use('/static', staticRouter)
   app.use(defaultErrorHandle)
+  // app.use('/static', express.static(UPLOAD_DIR))
 
   exitHook(() => {
     databaseService.closeDb()
