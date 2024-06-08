@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from 'express'
 import { checkSchema } from 'express-validator'
 import { JsonWebTokenError } from 'jsonwebtoken'
 import { capitalize } from 'lodash'
+import { ObjectId } from 'mongodb'
 import { UserVerifyStatus } from '~/constants/enum'
 import HTTPSTATUS from '~/constants/httpStatus'
 import USER_MESSAGES from '~/constants/messages'
@@ -364,4 +365,49 @@ export const followValidator = validate(
     },
     ['body']
   )
+)
+
+/**
+ * @unfollowValidator
+ */
+export const unfollowValidator = validate(
+  checkSchema(
+    {
+      user_id: userIdSchema
+    },
+    ['params']
+  )
+)
+
+/**
+ * @changePasswordValidator
+ */
+export const changePasswordValidator = validate(
+  checkSchema({
+    old_password: {
+      ...passwordSchema,
+      custom: {
+        options: async (value: string, { req }) => {
+          const { user_id } = (req as Request).decoded_authorization as TokenPayload
+          const user = await databaseService.users.findOne({
+            _id: new ObjectId(user_id)
+          })
+          if (!user) {
+            throw new errorWithStatus({
+              message: USER_MESSAGES.USER_NOT_FOUND,
+              status: HTTPSTATUS.NOT_FOUND
+            })
+          }
+          if (user.password !== hashPassword(value)) {
+            throw new errorWithStatus({
+              message: USER_MESSAGES.OLD_PASSWORD_NOT_MATCH,
+              status: HTTPSTATUS.UNAUTHORIZED
+            })
+          }
+        }
+      }
+    },
+    password: passwordSchema,
+    confirm_password: confirmPasswordSchema
+  })
 )

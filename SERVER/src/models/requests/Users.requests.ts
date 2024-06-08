@@ -45,8 +45,19 @@ export interface updateMeReqbody {
 export interface getProfileReqParam {
   username: string
 }
+
+export interface UnfollowReqParams {
+  user_id: string
+}
+
 export interface FollwReqBody {
   followed_user_id: string
+}
+
+export interface ChangePasswordReqBody {
+  old_password: string
+  password: string
+  confirm_password: string
 }
 export interface TokenPayload extends JwtPayload {
   user_id: string

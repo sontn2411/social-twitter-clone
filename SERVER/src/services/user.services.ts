@@ -12,6 +12,7 @@ import USER_MESSAGES from '~/constants/messages'
 import { errorWithStatus } from '~/models/errors'
 import HTTPSTATUS from '~/constants/httpStatus'
 import { Follower } from '~/models/schemas/Follower.schema'
+import axios from 'axios'
 
 class UserService {
   private signAccsessToken({ user_id, verify }: { user_id: string; verify: UserVerifyStatus }) {
@@ -36,9 +37,9 @@ class UserService {
         verify
       },
       options: {
-        expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN
+        expiresIn: env.REFRESH_TOKEN_EXPIRES_IN
       },
-      secretOrPrivateKey: process.env.JWT_SECRET_RERFESH_TOKEN as string
+      secretOrPrivateKey: env.JWT_SECRET_RERFESH_TOKEN as string
     })
   }
 
@@ -67,12 +68,86 @@ class UserService {
         verify
       },
       options: {
-        expiresIn: process.env.FORGOT_PASSWORD_TOKEN_EXPIRES_IN
+        expiresIn: env.FORGOT_PASSWORD_TOKEN_EXPIRES_IN
       },
-      secretOrPrivateKey: process.env.JWT_SECRET_FORGOT_PASSWORD_TOKEN as string
+      secretOrPrivateKey: env.JWT_SECRET_FORGOT_PASSWORD_TOKEN as string
     })
   }
+  private async getGoogleUserInfo(access_token: string, id_token: string) {
+    const data = await axios.get('https://www.googleapis.com/oauth2/v1/userinfo', {
+      params: {
+        access_token,
+        alt: 'json'
+      },
+      headers: {
+        Authorization: `Bearer ${id_token}`
+      }
+    })
+    return data.data as {
+      id: string
+      email: string
+      given_name: string
+      family_name: string
+      picture: string
+      locale: string
+      verified_email: boolean
+      name: string
+    }
+  }
+  private async getOauthGoogleToken(code: string) {
+    const body = {
+      code,
+      client_id: env.GOOGLE_CLIENT_ID,
+      client_secret: env.GOOGLE_CLIENT_SECRET,
+      redirect_uri: env.GOOGLE_REDIRECT_URI,
+      grant_type: 'authorization_code'
+    }
+    const { data } = await axios.post('https://oauth2.googleapis.com/token', body, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    })
+    return data as {
+      access_token: string
+      id_token: string
+    }
+  }
 
+  async oauth(code: string) {
+    const { access_token, id_token } = await this.getOauthGoogleToken(code)
+    const infoUser = await this.getGoogleUserInfo(access_token, id_token)
+    if (!infoUser.verified_email) {
+      throw new errorWithStatus({
+        message: USER_MESSAGES.EMAIL_NOT_VERIFIED,
+        status: HTTPSTATUS.BAD_REQUEST
+      })
+    }
+    const user = await databaseService.users.findOne({ email: infoUser.email })
+    if (user) {
+      const [access_token, refesh_tokens] = await this.acsessTokenAndFrefeshToken({
+        user_id: user._id.toString(),
+        verify: user.verify
+      })
+      await databaseService.refeshTokens.insertOne(new RefeshToken({ user_id: user._id, token: refesh_tokens }))
+      return {
+        access_token,
+        refresh_token: refesh_tokens,
+        newUser: 0,
+        verify: user.verify
+      }
+    } else {
+      const password = Math.random().toString(36).substring(2, 15)
+      const data = this.register({
+        email: infoUser.email,
+        name: infoUser.name,
+        date_of_birth: new Date().toISOString(),
+        password,
+        confirmPassword: password
+      })
+
+      return { ...data, newUser: 1, verify: UserVerifyStatus.Verified }
+    }
+  }
   async checkMailExit(email: string) {
     const isEmail = await databaseService.users.findOne({ email })
     return Boolean(isEmail)
@@ -279,6 +354,42 @@ class UserService {
     }
     return {
       message: USER_MESSAGES.ALREADY_FOLLOW
+    }
+  }
+  async unfollower(user_id: string, followed_user_id: string) {
+    const follower = await databaseService.follower.findOne({
+      user_id: new ObjectId(user_id),
+      follower_user_id: new ObjectId(followed_user_id)
+    })
+    if (follower === null) {
+      return {
+        message: USER_MESSAGES.ALREADY_UNFOLLOW
+      }
+    }
+
+    await databaseService.follower.deleteOne({
+      user_id: new ObjectId(user_id),
+      follower_user_id: new ObjectId(followed_user_id)
+    })
+    return {
+      message: USER_MESSAGES.UNFOLLOW_SUCCESS
+    }
+  }
+
+  async changePassword(user_id: string, password: string) {
+    await databaseService.users.updateOne(
+      { _id: new ObjectId(user_id) },
+      {
+        $set: {
+          password: hashPassword(password)
+        },
+        $currentDate: {
+          updated_at: true
+        }
+      }
+    )
+    return {
+      message: USER_MESSAGES.CHANGE_PASSWORD_SUCCESS
     }
   }
 }

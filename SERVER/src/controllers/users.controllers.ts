@@ -1,10 +1,12 @@
 import { NextFunction, Request, Response } from 'express'
 import USER_MESSAGES from '~/constants/messages'
 import {
+  ChangePasswordReqBody,
   FollwReqBody,
   LoginResBody,
   RegisterResBody,
   TokenPayload,
+  UnfollowReqParams,
   VerifyEmailReqBody,
   forgotPasswordReqBody,
   forgotPasswordTokenReqBody,
@@ -43,6 +45,19 @@ export const loginController = async (
     messages: USER_MESSAGES.LOGIN_SUCCESS,
     result
   })
+}
+
+export const oauthController = async (req: Request, res: Response) => {
+  const { code } = req.query
+  console.log(code)
+  const result = (await userService.oauth(code as string)) as {
+    access_token: string
+    refresh_token: string
+    newUser: number
+    verify: UserVerifyStatus
+  }
+  const urlRedirect = `${process.env.CLIENT_REDERECT_CALLBACK}?access_token=${result.access_token}&refresh_token=${result.refresh_token}&new_user=${result.newUser}&verify=${result.verify}`
+  return res.redirect(urlRedirect)
 }
 
 export const emailVerifyController = async (
@@ -165,5 +180,27 @@ export const followerController = async (
   const { user_id } = req.decoded_authorization as TokenPayload
   const { followed_user_id } = req.body
   const result = await userService.follower(user_id, followed_user_id)
+  return res.json(result)
+}
+
+export const unfollowerController = async (
+  req: Request<ParamsDictionary, never, UnfollowReqParams>,
+  res: Response,
+  next: NextFunction
+) => {
+  const { user_id } = req.decoded_authorization as TokenPayload
+  const { user_id: unfollowed_user_id } = req.params
+  const result = await userService.unfollower(user_id, unfollowed_user_id)
+  return res.json(result)
+}
+
+export const changePasswordController = async (
+  req: Request<ParamsDictionary, never, ChangePasswordReqBody>,
+  res: Response,
+  next: NextFunction
+) => {
+  const { user_id } = req.decoded_authorization as TokenPayload
+  const { password } = req.body
+  const result = await userService.changePassword(user_id, password)
   return res.json(result)
 }
