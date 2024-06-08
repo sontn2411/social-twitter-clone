@@ -20,9 +20,8 @@ import databaseService from '~/services/database.services'
 import HTTPSTATUS from '~/constants/httpStatus'
 import { ObjectId } from 'mongodb'
 import User from '~/models/schemas/User.schema'
-import { verify } from 'crypto'
 import { UserVerifyStatus } from '~/constants/enum'
-import { body } from 'express-validator'
+import { env } from '~/config/environment'
 
 export const registerController = async (
   req: Request<ParamsDictionary, any, RegisterResBody>,
@@ -56,7 +55,7 @@ export const oauthController = async (req: Request, res: Response) => {
     newUser: number
     verify: UserVerifyStatus
   }
-  const urlRedirect = `${process.env.CLIENT_REDERECT_CALLBACK}?access_token=${result.access_token}&refresh_token=${result.refresh_token}&new_user=${result.newUser}&verify=${result.verify}`
+  const urlRedirect = `${env.CLIENT_REDERECT_CALLBACK}?access_token=${result.access_token}&refresh_token=${result.refresh_token}&new_user=${result.newUser}&verify=${result.verify}`
   return res.redirect(urlRedirect)
 }
 

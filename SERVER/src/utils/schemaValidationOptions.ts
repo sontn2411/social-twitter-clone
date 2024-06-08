@@ -7,6 +7,7 @@ import { capitalize } from 'lodash'
 import { JsonWebTokenError } from 'jsonwebtoken'
 import databaseService from '~/services/database.services'
 import { ObjectId } from 'mongodb'
+import { env } from '~/config/environment'
 
 export const passwordSchema: ParamSchema = {
   notEmpty: {
@@ -106,7 +107,7 @@ export const forgotPasswordToken: ParamSchema = {
       try {
         const decoded_forgot_password_token = await verifyToken({
           token: value,
-          secretOrPrivateKey: process.env.JWT_SECRET_FORGOT_PASSWORD_TOKEN as string
+          secretOrPrivateKey: env.JWT_SECRET_FORGOT_PASSWORD_TOKEN as string
         })
 
         const { user_id } = decoded_forgot_password_token

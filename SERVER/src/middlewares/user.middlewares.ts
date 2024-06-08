@@ -3,6 +3,7 @@ import { checkSchema } from 'express-validator'
 import { JsonWebTokenError } from 'jsonwebtoken'
 import { capitalize } from 'lodash'
 import { ObjectId } from 'mongodb'
+import { env } from '~/config/environment'
 import { UserVerifyStatus } from '~/constants/enum'
 import HTTPSTATUS from '~/constants/httpStatus'
 import USER_MESSAGES from '~/constants/messages'
@@ -79,7 +80,7 @@ export const emailVerifyTokenValidator = validate(
             try {
               const decoded_email_verify_token = await verifyToken({
                 token: value,
-                secretOrPrivateKey: process.env.JWT_SECRET_EMAIL_VERIFY_TOKEN as string
+                secretOrPrivateKey: env.JWT_SECRET_EMAIL_VERIFY_TOKEN as string
               })
               req.decoded_email_verify_token = decoded_email_verify_token
             } catch (error) {
@@ -175,7 +176,7 @@ export const accessTokenValidator = validate(
             try {
               const decoded_authorization = await verifyToken({
                 token: access_token,
-                secretOrPrivateKey: process.env.JWT_SECRET_ACCESS_TOKEN as string
+                secretOrPrivateKey: env.JWT_SECRET_ACCESS_TOKEN as string
               })
               req.decoded_authorization = decoded_authorization
             } catch (error) {
