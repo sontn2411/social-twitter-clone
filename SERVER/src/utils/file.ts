@@ -1,7 +1,7 @@
 import { Request } from 'express'
 import { File } from 'formidable'
 import fs from 'fs'
-import { UPLOAD_IMAGE_TEMP_DIR, UPLOAD_VIDEO_TEMP_DIR } from '~/constants/upload'
+import { UPLOAD_IMAGE_TEMP_DIR, UPLOAD_VIDEO_DIR, UPLOAD_VIDEO_TEMP_DIR } from '~/constants/upload'
 
 export const initFolder = () => {
   ;[UPLOAD_IMAGE_TEMP_DIR, UPLOAD_VIDEO_TEMP_DIR].forEach((fileURLToPath) => {
@@ -47,7 +47,7 @@ export const handleUploadImage = async (req: Request) => {
 export const handleUploadVideo = async (req: Request) => {
   const formidable = (await import('formidable')).default
   const form = formidable({
-    uploadDir: UPLOAD_VIDEO_TEMP_DIR,
+    uploadDir: UPLOAD_VIDEO_DIR,
     maxFiles: 1,
     maxFieldsSize: 50 * 1024 * 1024, //300kb
     filter: function ({ name, originalFilename, mimetype }) {

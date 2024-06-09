@@ -5,7 +5,7 @@ import { capitalize } from 'lodash'
 import { ObjectId } from 'mongodb'
 import { env } from '~/config/environment'
 import { UserVerifyStatus } from '~/constants/enum'
-import HTTPSTATUS from '~/constants/httpStatus'
+import HTTP_STATUS from '~/constants/httpStatus'
 import USER_MESSAGES from '~/constants/messages'
 import { REGEX_USERNAME } from '~/constants/regex'
 import { errorWithStatus } from '~/models/errors'
@@ -74,7 +74,7 @@ export const emailVerifyTokenValidator = validate(
             if (!value) {
               throw new errorWithStatus({
                 message: USER_MESSAGES.EMAIL_VERIFY_TOKEN_IS_REQUIRED,
-                status: HTTPSTATUS.UNAUTHORIZED
+                status: HTTP_STATUS.UNAUTHORIZED
               })
             }
             try {
@@ -86,7 +86,7 @@ export const emailVerifyTokenValidator = validate(
             } catch (error) {
               throw new errorWithStatus({
                 message: capitalize((error as JsonWebTokenError).message),
-                status: HTTPSTATUS.UNAUTHORIZED
+                status: HTTP_STATUS.UNAUTHORIZED
               })
             }
             return true
@@ -170,7 +170,7 @@ export const accessTokenValidator = validate(
             if (!access_token) {
               throw new errorWithStatus({
                 message: USER_MESSAGES.ACCESS_TOKEN_IS_REQUIRED,
-                status: HTTPSTATUS.UNAUTHORIZED
+                status: HTTP_STATUS.UNAUTHORIZED
               })
             }
             try {
@@ -182,7 +182,7 @@ export const accessTokenValidator = validate(
             } catch (error) {
               throw new errorWithStatus({
                 message: capitalize((error as JsonWebTokenError).message),
-                status: HTTPSTATUS.UNAUTHORIZED
+                status: HTTP_STATUS.UNAUTHORIZED
               })
             }
             return true
@@ -191,6 +191,48 @@ export const accessTokenValidator = validate(
       }
     },
     ['headers']
+  )
+)
+
+/**
+ * @accessTokenValidator
+ */
+export const refreshTokenValidator = validate(
+  checkSchema(
+    {
+      refresh_token: {
+        notEmpty: {
+          errorMessage: USER_MESSAGES.REFRESH_TOKEN_IS_REQUIRED
+        },
+        custom: {
+          options: async (value: string, { req }) => {
+            try {
+              const [decoded_refeshToken, refresh_token] = await Promise.all([
+                verifyToken({ token: value, secretOrPrivateKey: process.env.JWT_SECRET_RERFESH_TOKEN as string }),
+                databaseService.refeshTokens.findOne({ token: value })
+              ])
+              if (refresh_token === null) {
+                throw new errorWithStatus({
+                  message: USER_MESSAGES.USED_REFRESH_TOKEN_OR_NOT_EXIST,
+                  status: HTTP_STATUS.UNAUTHORIZED
+                })
+              }
+              ;(req as Request).decoded_refeshToken = decoded_refeshToken
+            } catch (error) {
+              if (error instanceof JsonWebTokenError) {
+                throw new errorWithStatus({
+                  message: capitalize(USER_MESSAGES.REFRESH_TOKEN_IS_INVALID),
+                  status: HTTP_STATUS.UNAUTHORIZED
+                })
+              }
+              throw error
+            }
+            return true
+          }
+        }
+      }
+    },
+    ['body']
   )
 )
 
@@ -260,7 +302,7 @@ export const verifyUserValidatior = async (req: Request, res: Response, next: Ne
     return next(
       new errorWithStatus({
         message: USER_MESSAGES.USER_NOT_VERIFIED,
-        status: HTTPSTATUS.FORBIDDEN
+        status: HTTP_STATUS.FORBIDDEN
       })
     )
   }
@@ -396,13 +438,13 @@ export const changePasswordValidator = validate(
           if (!user) {
             throw new errorWithStatus({
               message: USER_MESSAGES.USER_NOT_FOUND,
-              status: HTTPSTATUS.NOT_FOUND
+              status: HTTP_STATUS.NOT_FOUND
             })
           }
           if (user.password !== hashPassword(value)) {
             throw new errorWithStatus({
               message: USER_MESSAGES.OLD_PASSWORD_NOT_MATCH,
-              status: HTTPSTATUS.UNAUTHORIZED
+              status: HTTP_STATUS.UNAUTHORIZED
             })
           }
         }

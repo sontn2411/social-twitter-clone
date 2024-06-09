@@ -1,5 +1,5 @@
 import { ParamSchema } from 'express-validator'
-import HTTPSTATUS from '~/constants/httpStatus'
+import HTTP_STATUS from '~/constants/httpStatus'
 import USER_MESSAGES from '~/constants/messages'
 import { errorWithStatus } from '~/models/errors'
 import { verifyToken } from './jwt'
@@ -101,7 +101,7 @@ export const forgotPasswordToken: ParamSchema = {
       if (!value) {
         throw new errorWithStatus({
           message: USER_MESSAGES.FORGOT_PASSWORD_TOKEN_IS_REQUIRED,
-          status: HTTPSTATUS.UNAUTHORIZED
+          status: HTTP_STATUS.UNAUTHORIZED
         })
       }
       try {
@@ -118,20 +118,20 @@ export const forgotPasswordToken: ParamSchema = {
         if (user === null) {
           throw new errorWithStatus({
             message: USER_MESSAGES.USER_NOT_FOUND,
-            status: HTTPSTATUS.UNAUTHORIZED
+            status: HTTP_STATUS.UNAUTHORIZED
           })
         }
 
         if (user.forgot_password_token !== value) {
           throw new errorWithStatus({
             message: USER_MESSAGES.INVALID_FORGOT_PASSWORD_TOKEN,
-            status: HTTPSTATUS.UNAUTHORIZED
+            status: HTTP_STATUS.UNAUTHORIZED
           })
         }
       } catch (error) {
         throw new errorWithStatus({
           message: capitalize((error as JsonWebTokenError).message),
-          status: HTTPSTATUS.UNAUTHORIZED
+          status: HTTP_STATUS.UNAUTHORIZED
         })
       }
       return true
@@ -160,7 +160,7 @@ export const userIdSchema: ParamSchema = {
       if (!ObjectId.isValid(value)) {
         throw new errorWithStatus({
           message: USER_MESSAGES.INVALID_USER_ID,
-          status: HTTPSTATUS.NOT_FOUND
+          status: HTTP_STATUS.NOT_FOUND
         })
       }
       const followed_user = await databaseService.users.findOne({ _id: new ObjectId(value) })
@@ -168,7 +168,7 @@ export const userIdSchema: ParamSchema = {
       if (followed_user === null) {
         throw new errorWithStatus({
           message: USER_MESSAGES.USER_NOT_FOUND,
-          status: HTTPSTATUS.NOT_FOUND
+          status: HTTP_STATUS.NOT_FOUND
         })
       }
     }

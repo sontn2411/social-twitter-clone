@@ -7,6 +7,7 @@ import defaultErrorHandle from './middlewares/errors.middlewares'
 import mediasRouter from './routes/medias.routes'
 import { initFolder } from './utils/file'
 import staticRouter from './routes/static.routes'
+import { UPLOAD_VIDEO_DIR } from './constants/upload'
 const app = express()
 
 const START_SERVER = async () => {
@@ -19,7 +20,7 @@ const START_SERVER = async () => {
   app.use('/users', routerUser)
   app.use('/static', staticRouter)
   app.use(defaultErrorHandle)
-  // app.use('/static', express.static(UPLOAD_DIR))
+  app.use('/static/videos', express.static(UPLOAD_VIDEO_DIR))
 
   exitHook(() => {
     databaseService.closeDb()

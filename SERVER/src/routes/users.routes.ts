@@ -7,7 +7,9 @@ import {
   getMeController,
   getProfileController,
   loginController,
+  logoutController,
   oauthController,
+  refreshTokenController,
   registerController,
   resendVerifyEmailController,
   resetPasswordController,
@@ -23,6 +25,7 @@ import {
   followValidator,
   forgotPasswordValidator,
   loginValidator,
+  refreshTokenValidator,
   registerValidator,
   resetPasswordValidator,
   unfollowValidator,
@@ -49,6 +52,23 @@ routerUser.post('/register', registerValidator, wrapRequestHandler(registerContr
  * @Body { email: string, password: string}
  */
 routerUser.post('/login', loginValidator, wrapRequestHandler(loginController))
+
+/**
+ * Description. Logout a user
+ * Path: /logout
+ * Method: POST
+ * Header: { Authorization: Bearer <access_token> }
+ * Body: { refresh_token: string }
+ */
+routerUser.post('/logout', accessTokenValidator, refreshTokenValidator, wrapRequestHandler(logoutController))
+
+/**
+ * Description. refresh-token
+ * @path /refresh-token
+ * @Method POST
+ * @Body { refresh-token: string}
+ */
+routerUser.post('/refresh-token', refreshTokenValidator, wrapRequestHandler(refreshTokenController))
 
 /**
  * Description. Login with google

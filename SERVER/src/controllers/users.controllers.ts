@@ -4,6 +4,7 @@ import {
   ChangePasswordReqBody,
   FollwReqBody,
   LoginResBody,
+  LogoutResBody,
   RegisterResBody,
   TokenPayload,
   UnfollowReqParams,
@@ -11,13 +12,14 @@ import {
   forgotPasswordReqBody,
   forgotPasswordTokenReqBody,
   getProfileReqParam,
+  refreshTokenResBody,
   resetPasswordReqBody,
   updateMeReqbody
 } from '~/models/requests/Users.requests'
 import { ParamsDictionary } from 'express-serve-static-core'
 import userService from '~/services/user.services'
 import databaseService from '~/services/database.services'
-import HTTPSTATUS from '~/constants/httpStatus'
+import HTTP_STATUS from '~/constants/httpStatus'
 import { ObjectId } from 'mongodb'
 import User from '~/models/schemas/User.schema'
 import { UserVerifyStatus } from '~/constants/enum'
@@ -46,6 +48,22 @@ export const loginController = async (
   })
 }
 
+export const logoutController = async (req: Request<ParamsDictionary, any, LogoutResBody>, res: Response) => {
+  const { refresh_token } = req.body
+  const result = await userService.logout(refresh_token)
+  return res.json(result)
+}
+
+export const refreshTokenController = async (
+  req: Request<ParamsDictionary, any, refreshTokenResBody>,
+  res: Response
+) => {
+  const { refresh_token } = req.body
+  const { user_id, verify } = req.decoded_refeshToken as TokenPayload
+  const result = await userService.refreshToken({ user_id, verify, refresh_token })
+  return res.json(result)
+}
+
 export const oauthController = async (req: Request, res: Response) => {
   const { code } = req.query
   console.log(code)
@@ -68,7 +86,7 @@ export const emailVerifyController = async (
   const user = await databaseService.users.findOne({ _id: new ObjectId(user_id) })
 
   if (!user) {
-    return res.status(HTTPSTATUS.NOT_FOUND).json({ message: USER_MESSAGES.USER_NOT_FOUND })
+    return res.status(HTTP_STATUS.NOT_FOUND).json({ message: USER_MESSAGES.USER_NOT_FOUND })
   }
 
   // Đã verify rồi thì sẽ không báo lỗi
@@ -91,7 +109,7 @@ export const resendVerifyEmailController = async (req: Request, res: Response, n
   const user = await databaseService.users.findOne({ _id: new ObjectId(user_id) })
 
   if (!user) {
-    return res.status(HTTPSTATUS.NOT_FOUND).json({ message: USER_MESSAGES.USER_NOT_FOUND })
+    return res.status(HTTP_STATUS.NOT_FOUND).json({ message: USER_MESSAGES.USER_NOT_FOUND })
   }
 
   if (user.verify === UserVerifyStatus.Verified) {

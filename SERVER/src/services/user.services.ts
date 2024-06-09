@@ -10,7 +10,7 @@ import { verify } from 'crypto'
 import { RefeshToken } from '~/models/schemas/PefeshToken.schema'
 import USER_MESSAGES from '~/constants/messages'
 import { errorWithStatus } from '~/models/errors'
-import HTTPSTATUS from '~/constants/httpStatus'
+import HTTP_STATUS from '~/constants/httpStatus'
 import { Follower } from '~/models/schemas/Follower.schema'
 import axios from 'axios'
 
@@ -119,7 +119,7 @@ class UserService {
     if (!infoUser.verified_email) {
       throw new errorWithStatus({
         message: USER_MESSAGES.EMAIL_NOT_VERIFIED,
-        status: HTTPSTATUS.BAD_REQUEST
+        status: HTTP_STATUS.BAD_REQUEST
       })
     }
     const user = await databaseService.users.findOne({ email: infoUser.email })
@@ -190,6 +190,38 @@ class UserService {
     return {
       accses_token,
       refresh_token
+    }
+  }
+
+  async refreshToken({
+    user_id,
+    verify,
+    refresh_token
+  }: {
+    user_id: string
+    verify: UserVerifyStatus
+    refresh_token: string
+  }) {
+    const [new_access_token, new_refresh_token] = await Promise.all([
+      this.signAccsessToken({ user_id, verify }),
+      this.signPrefeshToken({ user_id, verify }),
+      databaseService.users.deleteOne({ token: refresh_token })
+    ])
+    await databaseService.refeshTokens.insertOne(
+      new RefeshToken({ user_id: new ObjectId(user_id), token: new_refresh_token })
+    )
+
+    return {
+      new_access_token,
+      new_refresh_token
+    }
+  }
+
+  async logout(refresh_token: string) {
+    const result = await databaseService.refeshTokens.deleteOne({ token: refresh_token })
+    console.log(result, 'result service')
+    return {
+      message: USER_MESSAGES.LOGOUT_SUCCESS
     }
   }
 
@@ -333,7 +365,7 @@ class UserService {
     if (profile === null) {
       throw new errorWithStatus({
         message: USER_MESSAGES.USER_NOT_FOUND,
-        status: HTTPSTATUS.NOT_FOUND
+        status: HTTP_STATUS.NOT_FOUND
       })
     }
     return profile
