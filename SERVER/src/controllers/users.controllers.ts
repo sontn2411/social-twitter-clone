@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express'
-import USER_MESSAGES from '~/constants/messages'
+import { USER_MESSAGES } from '~/constants/messages'
 import {
   ChangePasswordReqBody,
   FollwReqBody,

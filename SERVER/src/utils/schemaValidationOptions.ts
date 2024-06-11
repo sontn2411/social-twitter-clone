@@ -1,6 +1,6 @@
 import { ParamSchema } from 'express-validator'
 import HTTP_STATUS from '~/constants/httpStatus'
-import USER_MESSAGES from '~/constants/messages'
+import { USER_MESSAGES } from '~/constants/messages'
 import { errorWithStatus } from '~/models/errors'
 import { verifyToken } from './jwt'
 import { capitalize } from 'lodash'

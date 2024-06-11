@@ -8,6 +8,7 @@ import mediasRouter from './routes/medias.routes'
 import { initFolder } from './utils/file'
 import staticRouter from './routes/static.routes'
 import { UPLOAD_VIDEO_DIR } from './constants/upload'
+import tweetRouter from './routes/tweets.routes'
 const app = express()
 
 const START_SERVER = async () => {
@@ -18,6 +19,7 @@ const START_SERVER = async () => {
   app.use(express.json())
   app.use('/medias', mediasRouter)
   app.use('/users', routerUser)
+  app.use('/tweet', tweetRouter)
   app.use('/static', staticRouter)
   app.use(defaultErrorHandle)
   app.use('/static/videos', express.static(UPLOAD_VIDEO_DIR))

@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express'
 import path from 'path'
 import HTTP_STATUS from '~/constants/httpStatus'
-import USER_MESSAGES from '~/constants/messages'
+import { USER_MESSAGES } from '~/constants/messages'
 import { UPLOAD_IMAGE_DIR, UPLOAD_VIDEO_DIR, UPLOAD_VIDEO_TEMP_DIR } from '~/constants/upload'
 import mediasService from '~/services/medias.services'
 import fs from 'fs'
