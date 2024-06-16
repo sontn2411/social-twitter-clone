@@ -34,6 +34,10 @@ databaseService
   .connect()
   .then(() => console.log('connected to mongodb database'))
   .then(() => START_SERVER())
+  .then(() => {
+    databaseService.indexUses(), databaseService.indexRefreshToken(), databaseService.indexFollower()
+  })
+
   .catch((error) => {
     console.log('Error when connect to mongodb database')
     process.exit(0)

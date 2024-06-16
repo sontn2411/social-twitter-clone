@@ -3,10 +3,9 @@ import databaseService from './database.services'
 import User from '~/models/schemas/User.schema'
 import { hashPassword } from '~/utils/crypto'
 import { TokenType, UserVerifyStatus } from '~/constants/enum'
-import { signToken } from '~/utils/jwt'
+import { signToken, verifyToken } from '~/utils/jwt'
 import { env } from '~/config/environment'
 import { ObjectId } from 'mongodb'
-import { verify } from 'crypto'
 import { RefeshToken } from '~/models/schemas/PefeshToken.schema'
 import { USER_MESSAGES } from '~/constants/messages'
 import { errorWithStatus } from '~/models/errors'
@@ -29,7 +28,18 @@ class UserService {
     })
   }
 
-  private signPrefeshToken({ user_id, verify }: { user_id: string; verify: UserVerifyStatus }) {
+  private signPrefeshToken({ user_id, verify, exp }: { user_id: string; verify: UserVerifyStatus; exp?: number }) {
+    if (exp) {
+      return signToken({
+        payload: {
+          user_id,
+          token_type: TokenType.AccsesToken,
+          verify,
+          exp
+        },
+        secretOrPrivateKey: env.JWT_SECRET_RERFESH_TOKEN as string
+      })
+    }
     return signToken({
       payload: {
         user_id,
@@ -39,6 +49,13 @@ class UserService {
       options: {
         expiresIn: env.REFRESH_TOKEN_EXPIRES_IN
       },
+      secretOrPrivateKey: env.JWT_SECRET_RERFESH_TOKEN as string
+    })
+  }
+
+  private decodeRefreshToken(refreshToken: string) {
+    return verifyToken({
+      token: refreshToken,
       secretOrPrivateKey: env.JWT_SECRET_RERFESH_TOKEN as string
     })
   }
@@ -123,12 +140,17 @@ class UserService {
       })
     }
     const user = await databaseService.users.findOne({ email: infoUser.email })
+
     if (user) {
       const [access_token, refesh_tokens] = await this.acsessTokenAndFrefeshToken({
         user_id: user._id.toString(),
         verify: user.verify
       })
-      await databaseService.refeshTokens.insertOne(new RefeshToken({ user_id: user._id, token: refesh_tokens }))
+
+      const { exp, iat } = await this.decodeRefreshToken(refesh_tokens)
+      await databaseService.refeshTokens.insertOne(
+        new RefeshToken({ user_id: user._id, token: refesh_tokens, exp, iat })
+      )
       return {
         access_token,
         refresh_token: refesh_tokens,
@@ -168,12 +190,14 @@ class UserService {
         password: hashPassword(payload.password)
       })
     )
+
     const [accses_token, refresh_token] = await this.acsessTokenAndFrefeshToken({
       user_id: user_id.toString(),
       verify: UserVerifyStatus.Unverified
     })
+    const { exp, iat } = await this.decodeRefreshToken(refresh_token)
     await databaseService.refeshTokens.insertOne(
-      new RefeshToken({ user_id: new ObjectId(user_id), token: refresh_token })
+      new RefeshToken({ user_id: new ObjectId(user_id), token: refresh_token, exp, iat })
     )
     console.log('email_verify_token', email_verify_token)
     return {
@@ -184,8 +208,9 @@ class UserService {
 
   async login({ user_id, verify }: { user_id: string; verify: UserVerifyStatus }) {
     const [accses_token, refresh_token] = await this.acsessTokenAndFrefeshToken({ user_id, verify })
+    const { exp, iat } = await this.decodeRefreshToken(refresh_token)
     await databaseService.refeshTokens.insertOne(
-      new RefeshToken({ user_id: new ObjectId(user_id), token: refresh_token })
+      new RefeshToken({ user_id: new ObjectId(user_id), token: refresh_token, exp, iat })
     )
     return {
       accses_token,
@@ -196,19 +221,27 @@ class UserService {
   async refreshToken({
     user_id,
     verify,
-    refresh_token
+    refresh_token,
+    exp
   }: {
     user_id: string
     verify: UserVerifyStatus
     refresh_token: string
+    exp: number
   }) {
     const [new_access_token, new_refresh_token] = await Promise.all([
       this.signAccsessToken({ user_id, verify }),
-      this.signPrefeshToken({ user_id, verify }),
+      this.signPrefeshToken({ user_id, verify, exp }),
       databaseService.users.deleteOne({ token: refresh_token })
     ])
+    const decode_refeshToken = await this.decodeRefreshToken(new_refresh_token)
     await databaseService.refeshTokens.insertOne(
-      new RefeshToken({ user_id: new ObjectId(user_id), token: new_refresh_token })
+      new RefeshToken({
+        user_id: new ObjectId(user_id),
+        token: new_refresh_token,
+        exp: decode_refeshToken.exp,
+        iat: decode_refeshToken.iat
+      })
     )
 
     return {

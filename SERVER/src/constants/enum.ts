@@ -16,7 +16,7 @@ export enum MediaType {
   Video
 }
 
-export enum TweeType {
+export enum TweetType {
   Tweet,
   Retweet,
   Comment,

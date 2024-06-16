@@ -1,12 +1,12 @@
 import { checkSchema } from 'express-validator'
 import { isEmpty } from 'lodash'
 import { ObjectId } from 'mongodb'
-import { MediaType, TweeType, TweetAudience } from '~/constants/enum'
+import { MediaType, TweetAudience, TweetType } from '~/constants/enum'
 import { TWEETS_MESSAGES } from '~/constants/messages'
 import { numberEnumToArray } from '~/utils/commons'
 import { validate } from '~/utils/validate'
 
-const tweetTypes = numberEnumToArray(TweeType)
+const tweetTypes = numberEnumToArray(TweetType)
 const TweetAudiences = numberEnumToArray(TweetAudience)
 const MediaTypes = numberEnumToArray(MediaType)
 export const createTweetValidator = validate(
@@ -26,13 +26,15 @@ export const createTweetValidator = validate(
     parent_id: {
       custom: {
         options: (value, { req }) => {
-          const type = req.body.type as TweeType
+          const type = req.body.type as TweetType
           // nếu type là Retweet,Comment,QuoteTweet thì parent_id phải là tweet_id của tweet cha
-          if ([TweeType.Retweet, TweeType.Comment, TweeType.QuoteTweet].includes(type) && !ObjectId.isValid(value)) {
+          console.log(value)
+          console.log(value)
+          if ([TweetType.Retweet, TweetType.Comment, TweetType.QuoteTweet].includes(type) && !ObjectId.isValid(value)) {
             throw new Error(TWEETS_MESSAGES.PARENT_ID_MUST_BE_A_VALID_TWEET_ID)
           }
           // Nếu type là tweet thi parent_id phải là null
-          if (type === TweeType.Tweet && value !== null) {
+          if (type === TweetType.Tweet && value !== null) {
             throw new Error(TWEETS_MESSAGES.PARENT_ID_MUST_BE_NULL)
           }
           return true
@@ -43,12 +45,12 @@ export const createTweetValidator = validate(
       isString: true,
       custom: {
         options: (value, { req }) => {
-          const type = req.body.type as TweeType
+          const type = req.body.type as TweetType
           const hashTags = req.body.hashtags as string[]
           const mentions = req.body.mentions as string[]
           // nếu type là comment , QuoteTweet, Tweet và không có mentions và hashTags thì content phải string và không được rỗng
           if (
-            [TweeType.QuoteTweet, TweeType.Comment, TweeType.Tweet].includes(type) &&
+            [TweetType.QuoteTweet, TweetType.Comment, TweetType.Tweet].includes(type) &&
             isEmpty(hashTags) &&
             isEmpty(mentions) &&
             value === ''
@@ -56,7 +58,7 @@ export const createTweetValidator = validate(
             throw new Error(TWEETS_MESSAGES.CONTENT_MUST_BE_A_NON_EMPTY_STRING)
           }
           // nếu type là tweet thì content phải " "
-          if (type === TweeType.Retweet && value !== null) {
+          if (type === TweetType.Retweet && value !== null) {
             throw new Error(TWEETS_MESSAGES.CONTENT_MUST_BE_EMPTY_STRING)
           }
 

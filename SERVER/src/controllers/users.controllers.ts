@@ -59,8 +59,8 @@ export const refreshTokenController = async (
   res: Response
 ) => {
   const { refresh_token } = req.body
-  const { user_id, verify } = req.decoded_refeshToken as TokenPayload
-  const result = await userService.refreshToken({ user_id, verify, refresh_token })
+  const { user_id, verify, exp } = req.decoded_refeshToken as TokenPayload
+  const result = await userService.refreshToken({ user_id, verify, refresh_token, exp })
   return res.json(result)
 }
 
