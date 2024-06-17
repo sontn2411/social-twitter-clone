@@ -2,7 +2,10 @@ import { checkSchema } from 'express-validator'
 import { isEmpty } from 'lodash'
 import { ObjectId } from 'mongodb'
 import { MediaType, TweetAudience, TweetType } from '~/constants/enum'
+import HTTP_STATUS from '~/constants/httpStatus'
 import { TWEETS_MESSAGES } from '~/constants/messages'
+import { errorWithStatus } from '~/models/errors'
+import databaseService from '~/services/database.services'
 import { numberEnumToArray } from '~/utils/commons'
 import { validate } from '~/utils/validate'
 
@@ -101,6 +104,34 @@ export const createTweetValidator = validate(
             })
           ) {
             throw new Error(TWEETS_MESSAGES.MEDIAS_MUST_BE_AN_ARRAY_OF_MEDIA_OBJECT)
+          }
+          return true
+        }
+      }
+    }
+  })
+)
+
+export const tweetIdValidator = validate(
+  checkSchema({
+    tweet_id: {
+      custom: {
+        options: async (value, { req }) => {
+          if (!ObjectId.isValid(value)) {
+            throw new errorWithStatus({
+              status: HTTP_STATUS.BAD_REQUEST,
+              message: TWEETS_MESSAGES.INVALID_TWEET_ID
+            })
+          }
+
+          const tweets = await databaseService.tweets.findOne({
+            _id: new ObjectId(value)
+          })
+          if (!tweets) {
+            throw new errorWithStatus({
+              status: HTTP_STATUS.NOT_FOUND,
+              message: TWEETS_MESSAGES.TWEET_NOT_FOUND
+            })
           }
           return true
         }

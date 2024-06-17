@@ -9,6 +9,8 @@ import { initFolder } from './utils/file'
 import staticRouter from './routes/static.routes'
 import { UPLOAD_VIDEO_DIR } from './constants/upload'
 import tweetRouter from './routes/tweets.routes'
+import bookmarkRouter from './routes/bookmart.routes'
+import likeRouter from './routes/likes.routes'
 const app = express()
 
 const START_SERVER = async () => {
@@ -20,6 +22,8 @@ const START_SERVER = async () => {
   app.use('/medias', mediasRouter)
   app.use('/users', routerUser)
   app.use('/tweet', tweetRouter)
+  app.use('/bookmarks', bookmarkRouter)
+  app.use('/likes', likeRouter)
   app.use('/static', staticRouter)
   app.use(defaultErrorHandle)
   app.use('/static/videos', express.static(UPLOAD_VIDEO_DIR))
