@@ -1,6 +1,5 @@
 import { ObjectId, WithId } from 'mongodb'
 import databaseService from './database.services'
-import Bookmark from '~/models/schemas/Bookmark.schema'
 import Like from '~/models/schemas/Like.schema'
 
 class LikeService {
@@ -11,7 +10,7 @@ class LikeService {
         tweet_id: new ObjectId(tweet_id)
       },
       {
-        $setOnInsert: new Bookmark({
+        $setOnInsert: new Like({
           user_id: new ObjectId(user_id),
           tweet_id: new ObjectId(tweet_id)
         })
