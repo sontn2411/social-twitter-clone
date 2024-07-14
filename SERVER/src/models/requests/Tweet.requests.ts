@@ -1,6 +1,6 @@
-import { ObjectId } from 'mongodb'
 import { TweetAudience, TweetType } from '~/constants/enum'
 import { Media } from '../Others'
+import { ParamsDictionary, Query } from 'express-serve-static-core'
 
 export interface TweeRequestBody {
   type: TweetType
@@ -10,4 +10,17 @@ export interface TweeRequestBody {
   hashtags: string[] // tên của hashtag dạng ['javascript', 'reactjs']
   mentions: string[] // user_id[]
   medias: Media[]
+}
+
+export interface TweetParam extends ParamsDictionary {
+  tweet_id: string
+}
+
+export interface TweetQuery extends Query, Pagination {
+  limit: string
+}
+
+export interface Pagination {
+  page: string
+  tweet_type: string
 }

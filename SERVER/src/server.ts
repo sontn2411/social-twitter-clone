@@ -11,6 +11,7 @@ import { UPLOAD_VIDEO_DIR } from './constants/upload'
 import tweetRouter from './routes/tweets.routes'
 import bookmarkRouter from './routes/bookmart.routes'
 import likeRouter from './routes/likes.routes'
+// import '~/utils/faker'
 const app = express()
 
 const START_SERVER = async () => {

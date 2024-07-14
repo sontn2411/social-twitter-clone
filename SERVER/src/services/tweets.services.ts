@@ -65,7 +65,6 @@ class TweetService {
         }
       }
     )
-    console.log(result)
     return result as WithId<{
       user_views: number
       guest_views: number
@@ -242,6 +241,25 @@ class TweetService {
       tweets,
       total
     }
+  }
+  async getNewFeeds({ user_id, limit, page }: { user_id: string; limit: number; page: number }) {
+    const followed_user_ids = await databaseService.follower
+      .find(
+        {
+          user_id: new ObjectId(user_id)
+        },
+        {
+          projection: {
+            follower_user_id: 1,
+            _id: 0
+          }
+        }
+      )
+      .toArray()
+
+    const ids = followed_user_ids.map((id) => id.follower_user_id)
+    ids.push(new ObjectId(user_id))
+    return followed_user_ids
   }
 }
 
