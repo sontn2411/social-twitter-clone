@@ -1,18 +1,66 @@
 import { ObjectId } from 'mongodb'
 import databaseService from './database.services'
-import { TweetType } from '~/constants/enum'
+import { MediaType, MediaTypeQuery, PeopleFollow, TweetType } from '~/constants/enum'
 
 class SearchService {
-  async search({ limit, page, content, user_id }: { limit: number; page: number; content: string; user_id: string }) {
+  async search({
+    limit,
+    page,
+    content,
+    user_id,
+    media_type,
+    people_follow
+  }: {
+    limit: number
+    page: number
+    content: string
+    user_id: string
+    media_type?: string
+    people_follow?: PeopleFollow
+  }) {
+    const $match: any = {
+      $text: {
+        $search: content
+      }
+    }
+    if (media_type) {
+      if (media_type === MediaTypeQuery.Image) {
+        $match['medias.type'] = MediaType.Image
+      }
+      if (media_type === MediaTypeQuery.Video) {
+        $match['medias.type'] = {
+          $in: [MediaType.Video, MediaType.HLS]
+        }
+      }
+    }
+
+    if (people_follow && people_follow === PeopleFollow.Following) {
+      const user_id_obj = new ObjectId(user_id)
+      const followed_user_ids = await databaseService.follower
+        .find(
+          {
+            user_id: user_id_obj
+          },
+          {
+            projection: {
+              follower_user_id: 1,
+              _id: 0
+            }
+          }
+        )
+        .toArray()
+
+      const ids = followed_user_ids.map((id) => id.follower_user_id)
+      ids.push(user_id_obj)
+      $match['user_id'] = {
+        $in: ids
+      }
+    }
     const [tweets, total] = await Promise.all([
       databaseService.tweets
         .aggregate([
           {
-            $match: {
-              $text: {
-                $search: content
-              }
-            }
+            $match
           },
           {
             $lookup: {
@@ -171,11 +219,7 @@ class SearchService {
       databaseService.tweets
         .aggregate([
           {
-            $match: {
-              $text: {
-                $search: content
-              }
-            }
+            $match
           },
           {
             $lookup: {
@@ -240,7 +284,7 @@ class SearchService {
       })
     return {
       tweets,
-      total: total[0].total
+      total: total[0] ? total[0].total : 0
     }
   }
 }
