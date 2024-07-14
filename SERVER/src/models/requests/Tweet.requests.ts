@@ -17,10 +17,10 @@ export interface TweetParam extends ParamsDictionary {
 }
 
 export interface TweetQuery extends Query, Pagination {
-  limit: string
+  tweet_type: string
 }
 
 export interface Pagination {
   page: string
-  tweet_type: string
+  limit: string
 }

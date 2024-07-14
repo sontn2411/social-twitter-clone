@@ -11,6 +11,7 @@ import { UPLOAD_VIDEO_DIR } from './constants/upload'
 import tweetRouter from './routes/tweets.routes'
 import bookmarkRouter from './routes/bookmart.routes'
 import likeRouter from './routes/likes.routes'
+import searchRouter from './routes/search.routes'
 // import '~/utils/faker'
 const app = express()
 
@@ -25,6 +26,7 @@ const START_SERVER = async () => {
   app.use('/tweet', tweetRouter)
   app.use('/bookmarks', bookmarkRouter)
   app.use('/likes', likeRouter)
+  app.use('/search', searchRouter)
   app.use('/static', staticRouter)
   app.use(defaultErrorHandle)
   app.use('/static/videos', express.static(UPLOAD_VIDEO_DIR))
@@ -40,7 +42,10 @@ databaseService
   .then(() => console.log('connected to mongodb database'))
   .then(() => START_SERVER())
   .then(() => {
-    databaseService.indexUses(), databaseService.indexRefreshToken(), databaseService.indexFollower()
+    databaseService.indexUses(),
+      databaseService.indexRefreshToken(),
+      databaseService.indexFollower(),
+      databaseService.indexTweets()
   })
 
   .catch((error) => {
