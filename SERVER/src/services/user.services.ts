@@ -12,6 +12,7 @@ import { errorWithStatus } from '~/models/errors'
 import HTTP_STATUS from '~/constants/httpStatus'
 import { Follower } from '~/models/schemas/Follower.schema'
 import axios from 'axios'
+import { sendForgotPasswordEmail, sendVerifyRegisterEmail } from '~/utils/mail'
 
 class UserService {
   private signAccsessToken({ user_id, verify }: { user_id: string; verify: UserVerifyStatus }) {
@@ -200,6 +201,8 @@ class UserService {
       new RefeshToken({ user_id: new ObjectId(user_id), token: refresh_token, exp, iat })
     )
     console.log('email_verify_token', email_verify_token)
+
+    await sendVerifyRegisterEmail(payload.email, email_verify_token)
     return {
       accses_token,
       refresh_token
@@ -300,7 +303,7 @@ class UserService {
     }
   }
 
-  async forgotPassword({ user_id, verify }: { user_id: string; verify: UserVerifyStatus }) {
+  async forgotPassword({ user_id, verify, email }: { user_id: string; verify: UserVerifyStatus; email: string }) {
     const forgot_password_token = await this.signForgotPasswordToken({
       user_id,
       verify: UserVerifyStatus.Unverified
@@ -318,6 +321,7 @@ class UserService {
     )
     // Gửi lên email kèm đường link  đến email người dùng
     console.log('forgot_pasword', forgot_password_token)
+    await sendForgotPasswordEmail(email, forgot_password_token)
     return {
       forgot_password_token
     }
@@ -336,6 +340,7 @@ class UserService {
         }
       }
     )
+
     return {
       message: USER_MESSAGES.RESET_PASSWORD_SUCCESS
     }

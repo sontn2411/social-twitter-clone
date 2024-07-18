@@ -12,6 +12,7 @@ import tweetRouter from './routes/tweets.routes'
 import bookmarkRouter from './routes/bookmart.routes'
 import likeRouter from './routes/likes.routes'
 import searchRouter from './routes/search.routes'
+import '~/utils/mail'
 // import '~/utils/faker'
 const app = express()
 
