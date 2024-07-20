@@ -13,6 +13,7 @@ import bookmarkRouter from './routes/bookmart.routes'
 import likeRouter from './routes/likes.routes'
 import searchRouter from './routes/search.routes'
 import '~/utils/mail'
+import '~/utils/s3'
 // import '~/utils/faker'
 const app = express()
 
