@@ -7,6 +7,7 @@ import Tweets from '~/models/schemas/Tweet.schema'
 import Hashtag from '~/models/schemas/Hashtag.schema'
 import Bookmark from '~/models/schemas/Bookmark.schema'
 import Like from '~/models/schemas/Like.schema'
+import Conversation from '~/models/schemas/Conversation.schema'
 
 const uri = `mongodb+srv://${env.DB_USERNAME}:${env.DB_PASSWORD}@cluster0.wga91f9.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`
 
@@ -74,6 +75,9 @@ class DatabaseService {
   }
   get likes(): Collection<Like> {
     return this.db.collection(env.DB_LIKE_COLLECTION as string)
+  }
+  get conversations(): Collection<Conversation> {
+    return this.db.collection(env.DB_CONVERSATIONS_COLLECTION as string)
   }
   async closeDb() {
     await this.client.close()

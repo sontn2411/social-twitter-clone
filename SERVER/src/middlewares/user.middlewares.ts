@@ -463,3 +463,12 @@ export const isLoggedValidation = (middleware: (req: Request, res: Response, nex
     next()
   }
 }
+
+export const getConversationsValidator = validate(
+  checkSchema(
+    {
+      receiver_id: userIdSchema
+    },
+    ['params']
+  )
+)

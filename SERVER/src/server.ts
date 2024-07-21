@@ -12,22 +12,28 @@ import tweetRouter from './routes/tweets.routes'
 import bookmarkRouter from './routes/bookmart.routes'
 import likeRouter from './routes/likes.routes'
 import searchRouter from './routes/search.routes'
+import { createServer } from 'http'
+import cors from 'cors'
 import '~/utils/mail'
 import '~/utils/s3'
+import conversationRouter from './routes/conversation.routes'
+import initSocket from './utils/socket'
 // import '~/utils/faker'
+
 const app = express()
+const httpServer = createServer(app)
 
 const START_SERVER = async () => {
-  app.listen(env.APP_PORT, () => {
-    console.log(`Hello Phong phan, I am running at ${env.APP_HOST}:${env.APP_PORT}`)
-  })
   initFolder()
+
   app.use(express.json())
+  app.use(cors())
   app.use('/medias', mediasRouter)
   app.use('/users', routerUser)
   app.use('/tweet', tweetRouter)
   app.use('/bookmarks', bookmarkRouter)
   app.use('/likes', likeRouter)
+  app.use('/conversation', conversationRouter)
   app.use('/search', searchRouter)
   app.use('/static', staticRouter)
   app.use(defaultErrorHandle)
@@ -35,6 +41,12 @@ const START_SERVER = async () => {
 
   exitHook(() => {
     databaseService.closeDb()
+  })
+
+  initSocket(httpServer)
+
+  httpServer.listen(env.APP_PORT, () => {
+    console.log(`Hello Phong phan, I am running at ${env.APP_HOST}:${env.APP_PORT}`)
   })
 }
 
