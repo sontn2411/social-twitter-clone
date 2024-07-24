@@ -1,0 +1,79 @@
+components:
+  schemas:
+    LoginBody:
+      type: object
+      properties:
+        email:
+          type: string
+          example: john.doe@example.com
+        password:
+          type: string
+          example: password123
+    SuccessAuthentication:
+      properties:
+        access_token:
+          type: string
+          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjY5MjExNmRiOGE4MjhmMTlkMGNiNjhhIiwidG9rZW5fdHlwZSI6MCwidmVyaWZ5IjoxLCJpYXQiOjE3MjE2NTU2MTAsImV4cCI6MTcyMTY1NjUxMH0.QW3KRLiZ-lmQu-U1DpZLpmXz7IaZ1FBDWVFIUgGXlE0'
+        refresh_token:
+          type: string
+          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjY5MjExNmRiOGE4MjhmMTlkMGNiNjhhIiwidG9rZW5fdHlwZSI6MCwidmVyaWZ5IjoxLCJpYXQiOjE3MjE2NTU2MTAsImV4cCI6MTczMDI5NTYxMH0.vqIVNYoAE7xSx20jk-lXIGgjzefis8Cmg9_mVDMsqHQ'
+      type: object
+    User:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: '6692116db8a828f19d0cb68a'
+          format: MongoId
+        name:
+          type: string
+          example: 'phongphan23'
+        email:
+          type: string
+          example: 'phongphan@gmail.com'
+        date_of_birth:
+          type: string
+          format: ISO8601
+          example: '2024-05-09T08:46:09.824Z'
+        created_at:
+          type: string
+          format: ISO8601
+          example: '2024-07-13T05:32:29.387Z'
+        updated_at:
+          type: string
+          format: ISO8601
+          example: '2024-07-13T11:54:36.107Z'
+        verify:
+          $ref: '#/components/schemas/UserVerifyStatus'
+        twitter_circle:
+          type: array
+          items:
+            type: string
+            format: MongoId
+          example: ['6691df020921b740d7a9d08a', '6691df020921b740d7a9d08a']
+        bio:
+          type: string
+          example: ''
+        location:
+          type: string
+          example: ''
+        website:
+          type: string
+          example: ''
+        username:
+          type: string
+          example: 'user_6692116db8a828f19d0cb68a'
+        avatar:
+          type: string
+          example: ''
+        cover_photo:
+          type: string
+          example: ''
+    UserVerifyStatus:
+      type: number
+      enum: [Unverified, Verified, Banned]
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

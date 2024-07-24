@@ -1,18 +1,15 @@
 import * as AWS from '@aws-sdk/client-s3'
 import fs from 'fs'
-import path from 'path'
-import 'dotenv/config'
 import { Upload } from '@aws-sdk/lib-storage'
+import { env } from '~/config/environment'
 
 const client = new AWS.S3({
-  region: process.env.AWS_REGION,
+  region: env.AWS_REGION,
   credentials: {
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY as string,
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID as string
+    secretAccessKey: env.AWS_SECRET_ACCESS_KEY as string,
+    accessKeyId: env.AWS_ACCESS_KEY_ID as string
   }
 })
-
-// const file = fs.readFileSync(path.resolve('uploads/images/b67ed92730361f49a769d2a00.jpg'))
 
 export const uploadFileToS3 = ({
   filename,

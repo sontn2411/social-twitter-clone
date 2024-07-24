@@ -13,6 +13,8 @@ import bookmarkRouter from './routes/bookmart.routes'
 import likeRouter from './routes/likes.routes'
 import searchRouter from './routes/search.routes'
 import { createServer } from 'http'
+import swaggerUi from 'swagger-ui-express'
+import swaggerJsdoc from 'swagger-jsdoc'
 import cors from 'cors'
 import '~/utils/mail'
 import '~/utils/s3'
@@ -23,9 +25,56 @@ import initSocket from './utils/socket'
 const app = express()
 const httpServer = createServer(app)
 
+const options: swaggerJsdoc.Options = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'X clone (Twitter API)',
+      version: '1.0.0',
+      description: `
+        ## Twitter Clone API Documentation
+
+        Welcome to the Twitter Clone API documentation. This API allows you to create, read, update, and delete tweets, follow users, and interact with various other features similar to Twitter.
+
+        ### Features:
+        - User authentication and authorization
+        - Tweet creation, deletion, and retrieval
+        - Follow and unfollow users
+        - Like and comment on tweets
+        - Real-time notifications
+
+        ### Technologies Used:
+        - **Backend**: Node.js, Express.js
+        - **Database**: MongoDB
+        - **Authentication**: JWT (JSON Web Tokens)
+        
+        This API is built with a focus on simplicity and scalability, making it easy for developers to integrate Twitter-like features into their applications.
+
+        For more information, please refer to the detailed documentation provided for each endpoint.
+      `,
+      contact: {
+        name: 'Phong Phan',
+        email: 'phongphanq089@gmail.com'
+      }
+    },
+    servers: [
+      {
+        url: 'http://localhost:4000',
+        description: 'Developer server'
+      },
+      {
+        url: 'https://twitter-clone-api.com/api',
+        description: 'Production server'
+      }
+    ]
+  },
+  apis: ['./open-api/*.yaml']
+}
+const openapiSpecification = swaggerJsdoc(options)
+
 const START_SERVER = async () => {
   initFolder()
-
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openapiSpecification))
   app.use(express.json())
   app.use(cors())
   app.use('/medias', mediasRouter)
