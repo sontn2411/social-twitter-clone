@@ -1,7 +1,7 @@
 import express from 'express'
 import databaseService from './services/database.services'
 import exitHook from 'async-exit-hook'
-import { env } from './config/environment'
+import { env, isProduction } from './config/environment'
 import routerUser from './routes/users.routes'
 import defaultErrorHandle from './middlewares/errors.middlewares'
 import mediasRouter from './routes/medias.routes'
@@ -15,15 +15,34 @@ import searchRouter from './routes/search.routes'
 import { createServer } from 'http'
 import swaggerUi from 'swagger-ui-express'
 import swaggerJsdoc from 'swagger-jsdoc'
-import cors from 'cors'
+import cors, { CorsOptions } from 'cors'
 import '~/utils/mail'
 import '~/utils/s3'
 import conversationRouter from './routes/conversation.routes'
 import initSocket from './utils/socket'
+import helmet from 'helmet'
+import rateLimit from 'express-rate-limit'
 // import '~/utils/faker'
 
 const app = express()
+
 const httpServer = createServer(app)
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false // Disable the `X-RateLimit-*` headers
+})
+
+app.use(limiter)
+
+app.use(helmet())
+
+const corsOptions: CorsOptions = {
+  origin: isProduction ? env.CLIENT_URL : '*'
+}
+app.use(cors(corsOptions))
 
 const options: swaggerJsdoc.Options = {
   definition: {
@@ -76,7 +95,6 @@ const START_SERVER = async () => {
   initFolder()
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openapiSpecification))
   app.use(express.json())
-  app.use(cors())
   app.use('/medias', mediasRouter)
   app.use('/users', routerUser)
   app.use('/tweet', tweetRouter)
