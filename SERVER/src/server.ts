@@ -1,4 +1,5 @@
 import express from 'express'
+import 'dotenv/config'
 import databaseService from './services/database.services'
 import exitHook from 'async-exit-hook'
 import { env, isProduction } from './config/environment'
@@ -91,6 +92,8 @@ const options: swaggerJsdoc.Options = {
 }
 const openapiSpecification = swaggerJsdoc(options)
 
+console.log(isProduction, 'isProduction')
+
 const START_SERVER = async () => {
   initFolder()
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openapiSpecification))
@@ -112,9 +115,15 @@ const START_SERVER = async () => {
 
   initSocket(httpServer)
 
-  httpServer.listen(env.APP_PORT, () => {
-    console.log(`Hello Phong phan, I am running at ${env.APP_PORT}`)
-  })
+  if (isProduction) {
+    httpServer.listen(process.env.PORT, () => {
+      console.log(`Hello Phong phan, I am running at ${process.env.PORT}`)
+    })
+  } else {
+    httpServer.listen(env.APP_PORT, () => {
+      console.log(`Hello Phong phan, I am running at ${env.APP_PORT}`)
+    })
+  }
 }
 
 // ========|| DATABASE SERVER || ===========//
