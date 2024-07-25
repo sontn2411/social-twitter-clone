@@ -10,7 +10,7 @@
     "build": "rimraf ./dist && tsc && tsc-alias",
     "start:dev": "NODE_ENV=development node dist/server.js",
     "start:stag": "NODE_ENV=staging node dist/server.js",
-    "start:prod": "yarn build && NODE_ENV=production node dist/server.js",
+    "start:prod": "npm run build && NODE_ENV=production node dist/server.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "prettier": "prettier --check .",
