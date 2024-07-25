@@ -112,8 +112,8 @@ const START_SERVER = async () => {
 
   initSocket(httpServer)
 
-  httpServer.listen(env.HOST_PRODUCTION, () => {
-    console.log(`Hello Phong phan, I am running at ${env.APP_HOST}:${env.HOST_PRODUCTION}`)
+  httpServer.listen(env.APP_PORT, () => {
+    console.log(`Hello Phong phan, I am running at ${env.APP_PORT}`)
   })
 }
 
