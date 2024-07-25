@@ -60,7 +60,7 @@
     "mime": "^4.0.3",
     "minimist": "^1.2.8",
     "mongodb": "^6.6.1",
-    "sharp": "^0.33.4",
+    "sharp": "^0.32.6",
     "socket.io": "^4.7.5",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"
