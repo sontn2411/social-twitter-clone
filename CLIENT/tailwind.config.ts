@@ -14,6 +14,7 @@ const config = {
     },
     extend: {
       colors: {
+        'primary-main': 'rgb(29, 155, 240)',
         'primary-500': '#877EFF',
         'primary-600': '#5D5FEF',
         'secondary-500': '#FFB620',
